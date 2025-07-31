@@ -1,6 +1,7 @@
 # Default configuration file for PSFEx 3.17.1
 # EB 2016-06-28
 #
+# From ShOpt comparison paper, https://arxiv.org/pdf/2401.11625, but modified for better outputs by MM.
 #-------------------------------- PSF model ----------------------------------
 
 BASIS_TYPE PIXEL # NONE, PIXEL, GAUSS-LAGUERRE or FILE
