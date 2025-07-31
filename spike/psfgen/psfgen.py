@@ -635,8 +635,8 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 		epsfargs (dict): Keyword arguments for the EPSFBuilder. Default in spike is to not oversample
 			the PSF, but the regridding is all handled during the creation of the coord-specific model.
 		star_cuts_lower: Dictionary of extracted source properties that sources must have larger than to be considered stars, e.g. {'sharpness':0.86}
-			star_cuts_upper: Dictionary of extracted source properties that sources must have smaller than to be considered stars, e.g. {'sharpness':0.90}
-			import_stars: import table of stars to use in the fitting
+		star_cuts_upper: Dictionary of extracted source properties that sources must have smaller than to be considered stars, e.g. {'sharpness':0.90}
+		import_stars: import table of stars to use in the fitting
 
 	Returns:
 		ePSF model PSF
@@ -684,57 +684,57 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 	dat = fits.open(img)[ext].data
 
 	mean, median, std = sigma_clipped_stats(dat, sigma=3.0)
-    exsize = int(2 * ((fov_arcsec/plate_scale[pixkey])//2) + 1) #size of extraction box
+	exsize = int(2 * ((fov_arcsec/plate_scale[pixkey])//2) + 1) #size of extraction box
     
-    if import_stars:
-        sources=ascii.read(img.replace('.fits','_epsfstars.dat'),data_start=1,header_start=0,delimiter=',')
-        tab = Table()
-        xs = sources['xcentroid']
-        xs = sources['xcentroid']
-        ys = sources['ycentroid']  
-        tab['x'] = xs
-        tab['y'] = ys
-    else:
-        if starselect.upper() == 'DAO':
-            # take default FWHM to be 4x the detector plate scale, can overwrite with starselectargs
+	if import_stars:
+		sources=ascii.read(img.replace('.fits','_epsfstars.dat'),data_start=1,header_start=0,delimiter=',')
+		tab = Table()
+		xs = sources['xcentroid']
+		xs = sources['xcentroid']
+		ys = sources['ycentroid']  
+		tab['x'] = xs
+		tab['y'] = ys
+	else:
+		if starselect.upper() == 'DAO':
+			# take default FWHM to be 4x the detector plate scale, can overwrite with starselectargs
 
-            find = DAOStarFinder(threshold = thresh*std, **starselectargs)
-            if not maskval:
-                maskval = 0
+		find = DAOStarFinder(threshold = thresh*std, **starselectargs)
+		if not maskval:
+			maskval = 0
 
-        if starselect.upper() == 'IRAF':
-            ## from tests, nan masks work best with IRAF
-            # suggested thresh = 3 here, as function of masking
+		if starselect.upper() == 'IRAF':
+			## from tests, nan masks work best with IRAF
+			# suggested thresh = 3 here, as function of masking
 
-            mean, median, std = sigma_clipped_stats(dat, sigma=3.0)
+			mean, median, std = sigma_clipped_stats(dat, sigma=3.0)
 
-            find = IRAFStarFinder(threshold = thresh*std,  **starselectargs)
-            if not maskval:
-                maskval = np.nan	
+			find = IRAFStarFinder(threshold = thresh*std,  **starselectargs)
+			if not maskval:
+				maskval = np.nan	
 
-        if verbose:
-            print('Identifying stars to use in ePSF')
+		if verbose:
+			print('Identifying stars to use in ePSF')
 
-        if mask:
-            maskarr = fits.open(img)[('DQ', extv)].data
-            dat[maskarr > 0] = maskval # only retain good pixels
-            maskarr[maskarr > 0] = True
-            if usermask:
-                dat[usermask] = maskval
-                maskarr[usermask] = True
-            sources = find(dat, maskarr)
+		if mask:
+			maskarr = fits.open(img)[('DQ', extv)].data
+			dat[maskarr > 0] = maskval # only retain good pixels
+			maskarr[maskarr > 0] = True
+			if usermask:
+				dat[usermask] = maskval
+				maskarr[usermask] = True
+			sources = find(dat, maskarr)
 
-        if not mask:
-            sources = find(dat)
+		if not mask:
+			sources = find(dat)
 
         
-        xs = sources['xcentroid']
-        ys = sources['ycentroid']
-        exmask = ((xs > (exsize//2)) & (xs < (dat.shape[1] -1 - (exsize//2))) &
-            (ys > (exsize//2)) & (ys < (dat.shape[0] -1 - (exsize//2))))
-        tab = Table()
-        tab['x'] = xs[exmask]
-        tab['y'] = ys[exmask]
+		xs = sources['xcentroid']
+		ys = sources['ycentroid']
+		exmask = ((xs > (exsize//2)) & (xs < (dat.shape[1] -1 - (exsize//2))) &
+			(ys > (exsize//2)) & (ys < (dat.shape[0] -1 - (exsize//2))))
+		tab = Table()
+		tab['x'] = xs[exmask]
+		tab['y'] = ys[exmask]
         
 	nddata = NDData(data = dat - np.nanmedian(dat)) 
 	if verbose:
@@ -761,31 +761,32 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 	if verbose:
 		print('Starting PSF construction.')
 	model, fitstars = epsfbuilder(stars)
-    print('Number of stars:',stars.n_all_stars)
-    print('Number of good stars:',stars.n_good_stars)
-    if stars.n_good_stars>0: #needs to be at least 1 good star
-        if verbose:
-            print('Evaluating model at (%i, %i).'%(pos[0], pos[1]))
-        psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = int(pos[0]), y_0 = int(pos[1]))
+   
+	print('Number of stars:',stars.n_all_stars)
+	print('Number of good stars:',stars.n_good_stars)
+	if stars.n_good_stars>0: #needs to be at least 1 good star
+		if verbose:
+			print('Evaluating model at (%i, %i).'%(pos[0], pos[1]))
+		psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = int(pos[0]), y_0 = int(pos[1]))
 
-        if plot:
-            fig= plt.figure(figsize = (5, 5))
-            plt.imshow(psfmodel, origin = 'lower', cmap = 'Greys', 
-                vmin = np.nanpercentile(psfmodel, 20), vmax = np.nanpercentile(psfmodel, 97))
-            plt.colorbar()
-            fig.savefig(modname+'.png', bbox_inches = 'tight', dpi = 100)
+		if plot:
+			fig= plt.figure(figsize = (5, 5))
+			plt.imshow(psfmodel, origin = 'lower', cmap = 'Greys', 
+				vmin = np.nanpercentile(psfmodel, 20), vmax = np.nanpercentile(psfmodel, 97))
+			plt.colorbar()
+			fig.savefig(modname+'.png', bbox_inches = 'tight', dpi = 100)
 
-            if verbose:
-                print('PSF model image written to %s.png.'%(modname))
+			if verbose:
+				print('PSF model image written to %s.png.'%(modname))
 
-        if writeto:
-            if verbose:
-                print('Writing to %s.fits.'%modname.replace('_psf', '_topsf'))
-            tools.rewrite_fits(psfmodel, coords, img, imcam, pos, method = 'ePSFs')
+		if writeto:
+			if verbose:
+				print('Writing to %s.fits.'%modname.replace('_psf', '_topsf'))
+			tools.rewrite_fits(psfmodel, coords, img, imcam, pos, method = 'ePSFs')
 
-        return psfmodel
-    else:
-            return
+		return psfmodel
+	else:
+			return
 
 def psfex(coords, img, imcam, pos, plot = False, verbose = False, writeto = True, 
 	savepsfex = False, seconf = None, psfconf = None, cutneighbours = False, regrid = True, 
