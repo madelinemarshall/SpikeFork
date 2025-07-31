@@ -385,7 +385,7 @@ def psfexim(psfpath, pixloc, regrid = True, save = False):
 		if save.lower() == 'arr':
 			np.save(psfpath.replace('.psf', '_psfex_psf.npy'), psfmodel)
 		if save.lower() == 'fits':
-			fits.writeto(psfpath.replace('.psf', '_psfex_psf.fits'), psfmodel)
+			fits.writeto(psfpath.replace('.psf', '_psfex_psf.fits'), psfmodel,overwrite=True)
 
 	return psfmodel
 
@@ -609,11 +609,11 @@ def rewrite_fits(psfarr, coords, img, imcam, pos, method = None):
 	hdulist = fits.HDUList(hdlist)
 
 	if img.split('_')[-1] != '_c0m.fits':
-		hdulist.writeto(modname)
+		hdulist.writeto(modname,overwrite=True)
 
 	if img.split('_')[-1] == '_c0m.fits':
 		modname = modname.replace('_topsf.fits', '_topsf_c0m.fits')
-		hdulist.writeto(modname)
+		hdulist.writeto(modname,overwrite=True)
 		os.system('cp %s %s'%(img.replace('c0m.fits', 'c1m.fits'), modname.replace('c0m.fits', 'c1m.fits')))
 
 
@@ -688,7 +688,7 @@ def mask_fits(img, ext = 1, maskdq = True, dqthresh = 0,
 	hdlist = [cphdr, cihdr, cehdr, cdqhdr]
 
 	hdulist = fits.HDUList(hdlist)
-	hdulist.writeto(img.replace('.fits', '_mask.fits'))
+	hdulist.writeto(img.replace('.fits', '_mask.fits'),overwrite=True)
 
 
 def cutout(img, coords, ext = 1, fov_pixel = 120, save = True):
@@ -790,7 +790,7 @@ def cutout(img, coords, ext = 1, fov_pixel = 120, save = True):
 
 	hdulist = fits.HDUList(hdlist)
 	if save:
-		hdulist.writeto(img.replace('.fits', '_crop.fits'))
+		hdulist.writeto(img.replace('.fits', '_crop.fits'),overwrite=True)
 
 	return cutoutim
 
