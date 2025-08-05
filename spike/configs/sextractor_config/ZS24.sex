@@ -1,6 +1,7 @@
 # Default configuration file for SExtractor 2.28.0
 # EB 2023-03-11
-#
+# 
+# ZS24 = Zhuang, Ming-Yang and Shen, Yue 2024, https://ui.adsabs.harvard.edu/abs/2024ApJ...962..139Z/abstract
 
 # modified from default.sex only by ensuring that the catalog works for PSFEx
  
