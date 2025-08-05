@@ -11,9 +11,12 @@ PARAMETERS_NAME  prepsfex.param # name of the file containing catalog contents
  
 #------------------------------- Extraction ----------------------------------
  
-DETECT_MINAREA   3              # minimum number of pixels above threshold
-DETECT_THRESH    4              # a fairly conservative threshold
-ANALYSIS_THRESH  4              # idem
+#DETECT_MINAREA   3              # minimum number of pixels above threshold
+#DETECT_THRESH    4              # a fairly conservative threshold
+#ANALYSIS_THRESH  4              # idem
+DETECT_MINAREA   27              # minimum number of pixels above threshold
+DETECT_THRESH    60              # a fairly conservative threshold
+ANALYSIS_THRESH  60              # idem
  
 FILTER           Y              # apply filter for detection ("Y" or "N")?
 FILTER_NAME      default.conv   # name of the file containing the filter
