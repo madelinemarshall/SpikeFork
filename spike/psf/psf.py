@@ -563,7 +563,6 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 
 
 	imgs = sorted(glob.glob(img_dir+'*'+img_type+'.fits'))
-
 	imcam = inst.upper()
 
 	genpsf = True
@@ -719,42 +718,44 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 			imglist[obj][filt].append(img)
 
 	#####################################################################
-	for do in drizzlelist.keys():
-		if parallel:
-			pool = Pool(processes=(cpu_count() - 1))
-			for dk in drizzlelist[do].keys():
+	if drizzleimgs:  ##MM - I'm not going to combine my exposures, so might as well skip this step too 
+		#(also something's wrong with the filenames, it's crashing)
+		for do in drizzlelist.keys():
+			if parallel:
+				pool = Pool(processes=(cpu_count() - 1))
+				for dk in drizzlelist[do].keys():
 
-				shortdec, shortra = [cc.split('.')[0] for cc in do.split(' ')]
+					shortdec, shortra = [cc.split('.')[0] for cc in do.split(' ')]
 
-				if ':' not in shortra:
-					if int(shortra) > 0:
-						shortra = "+"+shortra
+					if ':' not in shortra:
+						if int(shortra) > 0:
+							shortra = "+"+shortra
 
-				resampname = shortdec+shortra+'_'+dk
-				resampname = resampname.replace(':', '').replace(' ', '')
+					resampname = shortdec+shortra+'_'+dk
+					resampname = resampname.replace(':', '').replace(' ', '')
 
-				resamp = resample_step.ResampleStep(**drizzleparams)
-				resampkwds = {'input_models': drizzlelist[do][dk], 
-							  'output_file': resampname,
-							  'output_dir':img_dir, 
-							  'save_results':True}
-				pool.apply_async(resamp.call, kwds = resampkwds)
-			pool.close()
-			pool.join()
-		if not parallel:
-			for dk in drizzlelist[do].keys():
-				shortdec, shortra = [cc.split('.')[0] for cc in do.split(' ')]
+					resamp = resample_step.ResampleStep(**drizzleparams)
+					resampkwds = {'input_models': drizzlelist[do][dk], 
+								  'output_file': resampname,
+								  'output_dir':img_dir, 
+								  'save_results':True}
+					pool.apply_async(resamp.call, kwds = resampkwds)
+				pool.close()
+				pool.join()
+			if not parallel:
+				for dk in drizzlelist[do].keys():
+					shortdec, shortra = [cc.split('.')[0] for cc in do.split(' ')]
 
-				if ':' not in shortra:
-					if int(shortra) > 0:
-						shortra = "+"+shortra
+					if ':' not in shortra:
+						if int(shortra) > 0:
+							shortra = "+"+shortra
 
-				resampname = shortdec+shortra+'_'+dk
-				resampname = resampname.replace(':', '').replace(' ', '')
+					resampname = shortdec+shortra+'_'+dk
+					resampname = resampname.replace(':', '').replace(' ', '')
 
-				resamp = resample_step.ResampleStep(**drizzleparams).call(drizzlelist[do][dk],
-					output_file = resampname, 
-					output_dir = img_dir, save_results = True)
+					resamp = resample_step.ResampleStep(**drizzleparams).call(drizzlelist[do][dk],
+						output_file = resampname, 
+						output_dir = img_dir, save_results = True)
 
 
 	
@@ -870,7 +871,7 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 		if verbose:
 			print('Generated ASDF output')
 
-	if returnpsf:
+	if returnpsf and drizzleimgs: ##MM - I'm not going to combine my exposures, so might as well skip this step too
 		returndict = {}
 		for do in drizzlelist.keys():
 			returndict[do] = {}

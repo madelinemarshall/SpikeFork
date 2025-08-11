@@ -558,7 +558,20 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 	modname = img.replace('.fits', '_'+coordstring+'_%s'%pos[3]+'_psf')
 
 	psf = webbpsf.setup_sim_to_match_file(img)
-	psf.detector_position = (x, y) #set detector_position
+	#psf.detector_position = (x, y) #set detector_position
+	#print('DETECTOR POSITION____________________________________________')
+	#print(x,y)
+
+	psf.detector_position = (np.floor(x),np.floor(y))
+
+	psf.options['source_offset_x'] = (x-np.floor(x))*psf.pixelscale  #in arcsec #- 0.031206
+	psf.options['source_offset_y'] = (y-np.floor(y))*psf.pixelscale #in arcsec
+        
+        
+	print('DETECTOR POSITION____________________________________________')
+	print(np.floor(x),np.floor(y))
+	print(psf.options['source_offset_x'],psf.options['source_offset_y'])
+
 
 	if verbose:
 		print('Producing PSF model')
@@ -698,9 +711,9 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 		if starselect.upper() == 'DAO':
 			# take default FWHM to be 4x the detector plate scale, can overwrite with starselectargs
 
-		find = DAOStarFinder(threshold = thresh*std, **starselectargs)
-		if not maskval:
-			maskval = 0
+			find = DAOStarFinder(threshold = thresh*std, **starselectargs)
+			if not maskval:
+				maskval = 0
 
 		if starselect.upper() == 'IRAF':
 			## from tests, nan masks work best with IRAF
@@ -834,7 +847,7 @@ def psfex(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 	if imcam in ['WFPC', 'WFPC1', 'WFPC2']:
 		ext = pos[2]
 		extv = pos[2]
-
+	print('IMAGE____________________________',img)
 	if mask:
 		tools.mask_fits(img, extv, **maskparams)
 		if verbose:
@@ -844,25 +857,24 @@ def psfex(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 		if verbose:
 			print('Running SExtractor')
 		tools.pysextractor(img+'[%i]'%ext, config = seconf)
-        
-    	
-    if cutneighbours:
-        from sklearn.neighbors import NearestNeighbors
-        maxdist=15
-        print('Removing sources with neighbour within {}'.format(maxdist))
-        with  fits.open(img.replace('fits', 'cat')) as sexcatfile:
-            sexcat = sexcatfile[2].data
-            X=np.transpose([np.array(sexcat['X_IMAGE']),np.array(sexcat['Y_IMAGE'])])
-            nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
-            distances, indices = nbrs.kneighbors(X)
-             distances=np.transpose(distances)[1]
-            data = sexcat
-            newdata = data[distances>maxdist]
-            sexcatfile[2].data=newdata
-            #hdu = fits.BinTableHDU(data=newdata)
-            hdul = fits.HDUList([sexcatfile[0],sexcatfile[1],sexcatfile[2]])
 
-            hdul.writeto(img.replace('fits', 'cat'),overwrite=True)
+	if cutneighbours:
+		from sklearn.neighbors import NearestNeighbors
+		maxdist=15
+		print('Removing sources with neighbour within {}'.format(maxdist))
+		with  fits.open(img.replace('fits', 'cat')) as sexcatfile:
+			sexcat = sexcatfile[2].data
+			X=np.transpose([np.array(sexcat['X_IMAGE']),np.array(sexcat['Y_IMAGE'])])
+			nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
+			distances, indices = nbrs.kneighbors(X)
+			distances=np.transpose(distances)[1]
+			data = sexcat
+			newdata = data[distances>maxdist]
+			sexcatfile[2].data=newdata
+			#hdu = fits.BinTableHDU(data=newdata)
+			hdul = fits.HDUList([sexcatfile[0],sexcatfile[1],sexcatfile[2]])
+
+			hdul.writeto(img.replace('fits', 'cat'),overwrite=True)
 
 	if verbose:
 		print('Finished SExtractor, running PSFEx')

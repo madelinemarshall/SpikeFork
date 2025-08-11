@@ -1,1 +1,1 @@
-from . import psf, psfgen, tools, jwstcal, romancal, stcal, stpipe
+from spike import psf, psfgen, tools, jwstcal, romancal, stcal, stpipe
