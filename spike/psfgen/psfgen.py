@@ -560,18 +560,16 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 
 	psf = webbpsf.setup_sim_to_match_file(img)
 	#psf.detector_position = (x, y) #set detector_position
-	#print('DETECTOR POSITION____________________________________________')
-	#print(x,y)
 
 	psf.detector_position = (np.floor(x),np.floor(y))
 
 	psf.options['source_offset_x'] = (x-np.floor(x))*psf.pixelscale  #in arcsec #- 0.031206
 	psf.options['source_offset_y'] = (y-np.floor(y))*psf.pixelscale #in arcsec
         
-        
-	print('DETECTOR POSITION____________________________________________')
-	print(np.floor(x),np.floor(y))
-	print(psf.options['source_offset_x'],psf.options['source_offset_y'])
+	if verbose:        
+		print('DETECTOR POSITION____________________________________________')
+		print(np.floor(x),np.floor(y))
+		print(psf.options['source_offset_x'],psf.options['source_offset_y'])
 
 
 	if verbose:
@@ -780,8 +778,9 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 	print('Number of good stars:',stars.n_good_stars)
 	if stars.n_good_stars>0: #needs to be at least 1 good star
 		if verbose:
-			print('Evaluating model at (%i, %i).'%(pos[0], pos[1]))
-		psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = int(pos[0]), y_0 = int(pos[1]))
+			print('Evaluating model at {}, {}.'.format(pos[0], pos[1]))
+		#psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = int(pos[0]), y_0 = int(pos[1]))
+		psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = (pos[0]), y_0 = (pos[1]))
 
 		if plot:
 			fig= plt.figure(figsize = (5, 5))
