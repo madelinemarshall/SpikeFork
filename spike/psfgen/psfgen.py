@@ -493,7 +493,8 @@ def stdpsf(coords, img, imcam, pos, plot = False, verbose = False,
 	
 	if verbose:
 		print('Finished reading STDPSF grid, generating PSF model')
-	psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = int(pos[0]), y_0 = int(pos[1]))
+	#psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = int(pos[0]), y_0 = int(pos[1]))
+	psfmodel = model.evaluate(x = x, y = y, flux = norm, x_0 = (pos[0]), y_0 = (pos[1]))
 
 	if plot:
 		fig= plt.figure(figsize = (5, 5))
