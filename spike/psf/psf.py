@@ -618,7 +618,8 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 				if obj_xy:
 					pos[0] = obj_xy[i][0]
 					pos[1] = obj_xy[i][1]
-					print(obj_xy[i],pos)
+					if verbose:
+						print(pos)
 
 				coordstring = str(skycoords.ra)
 				if skycoords.dec.deg >= 0:
