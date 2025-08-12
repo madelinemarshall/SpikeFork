@@ -10,8 +10,8 @@
 CATALOG_NAME     test.cat       # name of the output catalog
 CATALOG_TYPE     FITS_LDAC     # NONE,ASCII,ASCII_HEAD, ASCII_SKYCAT,
                                 # ASCII_VOTABLE, FITS_1.0 or FITS_LDAC
-PARAMETERS_NAME  /arc/projects/quasars_1813/maddie/conda_envs/spike/lib/python3.11/site-packages/spike/configs/sextractor_config/ZS24.param  # name of the file containing catalog contents
-#PARAMETERS_NAME  /arc/projects/quasars_1813/maddie/conda_envs/spike/lib/python3.11/site-packages/spike/configs/sextractor_config/default_psf.param  # name of the file containing catalog contents
+PARAMETERS_NAME  /arc/projects/quasars_1813/maddie/conda_envs/spike_github/lib/python3.11/site-packages/spike_githubDir/spike/configs/sextractor_config/ZS24.param  # name of the file containing catalog contents
+#PARAMETERS_NAME  /arc/projects/quasars_1813/maddie/conda_envs/spike_github/lib/python3.11/site-packages/spike_githubDir/spike/configs/sextractor_config/default_psf.param  # name of the file containing catalog contents
  
 #------------------------------- Extraction ----------------------------------
  
@@ -24,7 +24,7 @@ DETECT_THRESH    5            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 ANALYSIS_THRESH  5            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
  
 FILTER           Y              # apply filter for detection (Y or N)?
-FILTER_NAME      /arc/projects/quasars_1813/maddie/conda_envs/spike/lib/python3.11/site-packages/spike/configs/sextractor_config/default.conv   # name of the file containing the filter
+FILTER_NAME      /arc/projects/quasars_1813/maddie/conda_envs/spike_github/lib/python3.11/site-packages/spike_githubDir/spike/configs/sextractor_config/default.conv   # name of the file containing the filter
  
 DEBLEND_NTHRESH  32             # Number of deblending sub-thresholds
 DEBLEND_MINCONT  0.005          # Minimum contrast parameter for deblending
@@ -54,7 +54,7 @@ PIXEL_SCALE      0            # size of pixel in arcsec (0=use FITS WCS info)
 #------------------------- Star/Galaxy Separation ----------------------------
  
 SEEING_FWHM      1.0            # stellar FWHM in arcsec #edited for space-based
-STARNNW_NAME     /arc/projects/quasars_1813/maddie/conda_envs/spike/lib/python3.11/site-packages/spike/configs/sextractor_config/default.nnw    # Neural-Network_Weight table filename
+STARNNW_NAME     /arc/projects/quasars_1813/maddie/conda_envs/spike_github/lib/python3.11/site-packages/spike_githubDir/spike/configs/sextractor_config/default.nnw    # Neural-Network_Weight table filename
  
 #------------------------------ Background -----------------------------------
  
