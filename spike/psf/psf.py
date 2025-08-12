@@ -492,7 +492,8 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 		savedir = 'psfs', drizzleimgs = False, objonly = True, pretweaked = False, usecrds = False, 
 		keeporig = True, plot = False, verbose = False, parallel = False, out = 'fits',
 		returnpsf = 'full', cutout_fov = 151, savecutout = True, finalonly = False, 
-		removedir = 'toremove', tweakparams = {}, drizzleparams = {'allowed_memory':0.5}, **kwargs):
+		removedir = 'toremove', tweakparams = {}, drizzleparams = {'allowed_memory':0.5}, 
+		obj_xy = False, **kwargs):
 	"""
 	Generate drizzled James Webb Space Telescope PSFs.
 
@@ -534,6 +535,8 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 				for a full list. See here: https://jwst-pipeline.readthedocs.io/en/latest/jwst/tweakreg/README.html#step-arguments
 		drizzleparams (dict): Dictionary of keyword arguments for drizzlepac.astrodrizzle. See the drizzlepac 
 				documentation for a full list.
+		obj_xy (dict -- str: float, arr-like): for specified filename, 2D coordinates of object of interest in the exposure. 
+				Overwrites obj RA/DEC position. Only works for 1 obj.
 		**kwargs: Keyword arguments for PSF generation function.
 
 	Returns:
@@ -612,6 +615,10 @@ def jwst(img_dir, obj, inst, img_type = 'cal', camera = None, method = 'WebbPSF'
 			skycoords = tools.objloc(obj)
 			for i in imgs:
 				pos = tools.checkpixloc(skycoords, i, inst, camera)
+				if obj_xy:
+					pos[0] = obj_xy[i][0]
+					pos[1] = obj_xy[i][1]
+					print(obj_xy[i],pos)
 
 				coordstring = str(skycoords.ra)
 				if skycoords.dec.deg >= 0:
