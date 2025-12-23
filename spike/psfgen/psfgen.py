@@ -443,9 +443,11 @@ def stdpsf(coords, img, imcam, pos, plot = False, verbose = False,
 				det = pos[2][:-1]+'L'
 				url = baseurl+imcamurl+'/LWC/STDPSF_%s_%s.fits'%(det, pos[3])
 
-			if pos[3] in ['F070W', 'F090W', 'F115W', 'F140M', 'F150W', 'F182M', 'F200W'
+			elif pos[3] in ['F070W', 'F090W', 'F115W', 'F140M', 'F150W', 'F182M', 'F200W',
 							'F210M', 'F212N']:
 				url = baseurl+imcamurl+'/SWC/%s/STDPSF_%s_%s.fits'%(pos[3], pos[2], pos[3])
+			else:
+				print('ERROR: Filter not in list: ',pos[3])
 
 	det = None #set detector for photutils
 	if imcam in ['WFPC2', 'ACS/WFC', 'WFC3/UVIS']:
@@ -487,8 +489,7 @@ def stdpsf(coords, img, imcam, pos, plot = False, verbose = False,
 
 	x, y = np.meshgrid(np.arange(xmin, xmax+1), np.arange(ymin, ymax+1))
 
-	#preferred equivalent to using photutils.psf.stdpsf_reader directly
-
+	#preferred equivalent to using photutils.psf.stdpsf_reader directly\
 	model = GriddedPSFModel.read(filename = url, detector_id = det, format= 'stdpsf')
 	
 	if verbose:
@@ -562,12 +563,18 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 	#psf.detector_position = (x, y) #set detector_position
 
 	psf.detector_position = (np.floor(x),np.floor(y))
-
+	print('pix scale',psf.pixelscale)
 	psf.options['source_offset_x'] = (x-np.floor(x))*psf.pixelscale  #in arcsec #- 0.031206
 	psf.options['source_offset_y'] = (y-np.floor(y))*psf.pixelscale #in arcsec
+	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
+	psf.options['charge_diffusion_sigma'] = 0.020 #0.028
+	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
+	psf.options['parity'] = 'odd'
+	print('parity',psf.options.get('parity'))
         
 	if verbose:        
 		print('DETECTOR POSITION____________________________________________')
+		print(x,y)
 		print(np.floor(x),np.floor(y))
 		print(psf.options['source_offset_x'],psf.options['source_offset_y'])
 
@@ -576,8 +583,10 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 		print('Producing PSF model')
 	psfmod = psf.calc_psf(fov_arcsec = fov_arcsec, oversample = sample, **calckwargs)
 
-	psfmodel = psfmod['DET_DIST'].data
-
+	psfmodel = psfmod['DET_DIST'].data 
+	#With geometric distortion effects and detector charge transfer effects, detector-sampled
+	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
+    
 	if savefull:
 		if is_stpsf:
 			code_name = 'STPSF'
@@ -612,7 +621,7 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, writeto = True, 
 	fov_arcsec = 6, norm = 1., starselect = 'DAO', starselectargs = {'fwhm':10}, thresh = 125,
 	usermask = None, maskval = None, epsfargs = {'oversampling':1, 'progress_bar':True, 'maxiters':10},
-	star_cuts_lower = None, star_cuts_upper = None, import_stars = False):
+	import_stars = False):
 	"""
 	Generate PSFs using the empirical photutils.epsf routine. 
 
@@ -646,8 +655,6 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 			Otherwise, can be np.nan or number. Default for 'IRAF' is np.nan, default for 'DAO' is 0.
 		epsfargs (dict): Keyword arguments for the EPSFBuilder. Default in spike is to not oversample
 			the PSF, but the regridding is all handled during the creation of the coord-specific model.
-		star_cuts_lower: Dictionary of extracted source properties that sources must have larger than to be considered stars, e.g. {'sharpness':0.86}
-		star_cuts_upper: Dictionary of extracted source properties that sources must have smaller than to be considered stars, e.g. {'sharpness':0.90}
 		import_stars: import table of stars to use in the fitting
 
 	Returns:
@@ -699,9 +706,9 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 	exsize = int(2 * ((fov_arcsec/plate_scale[pixkey])//2) + 1) #size of extraction box
     
 	if import_stars:
+		print(img.replace('.fits','_epsfstars.dat'))
 		sources=ascii.read(img.replace('.fits','_epsfstars.dat'),data_start=1,header_start=0,delimiter=',')
 		tab = Table()
-		xs = sources['xcentroid']
 		xs = sources['xcentroid']
 		ys = sources['ycentroid']  
 		tab['x'] = xs
@@ -714,7 +721,7 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 			if not maskval:
 				maskval = 0
 
-		if starselect.upper() == 'IRAF':
+		elif starselect.upper() == 'IRAF':
 			## from tests, nan masks work best with IRAF
 			# suggested thresh = 3 here, as function of masking
 
@@ -728,7 +735,10 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 			print('Identifying stars to use in ePSF')
 
 		if mask:
-			maskarr = fits.open(img)[('DQ', extv)].data
+			try:
+				maskarr = fits.open(img)[('DQ', extv)].data
+			except:
+				maskarr = np.zeros(np.shape(dat),dtype=int)
 			dat[maskarr > 0] = maskval # only retain good pixels
 			maskarr[maskarr > 0] = True
 			if usermask:
@@ -748,10 +758,16 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 		tab['x'] = xs[exmask]
 		tab['y'] = ys[exmask]
         
-	nddata = NDData(data = dat - np.nanmedian(dat)) 
+	nddat = dat - np.nanmedian(dat)
+	#nddat[np.isnan(nddat)]=-99
+	#nddat[np.isinf(nddat)]=-99
+	nddata = NDData(data = nddat) 
 	if verbose:
 		print('Beginning stellar extraction.')
 	stars = extract_stars(nddata, tab, size = exsize)
+	##New to deal with NaNs crashing the fits (MM)
+	for ii in range(len(stars)):
+		stars.data[ii][np.isnan(stars.data[ii])]=-99
 
 	dimxy = fov_arcsec/plate_scale[pixkey] #make square PSF
 	halfdim = dimxy//2
@@ -802,8 +818,8 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 			return
 
 def psfex(coords, img, imcam, pos, plot = False, verbose = False, writeto = True, 
-	savepsfex = False, seconf = None, psfconf = None, cutneighbours = False, regrid = True, 
-	mask = True, maskparams = {}):
+	savepsfex = False, seconf = None, psfconf = None, cutneighbours = False, cutparams = None,
+	regrid = True, mask = True, maskparams = {}):
 	"""
 	Generate PSFs using PSFEx.
 
@@ -828,6 +844,8 @@ def psfex(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 		savepsfex (str): If 'fits' or 'arr' save 2D model to that format.
 		seconf (str): Path to SExtractor configuration file if not using default.
 		peconf (str): Path to PSFEx configuration file if not using default.
+		cutneighbours (bool): Remove sources that have neighbour within 15 pix.
+		cutparams (dict): SExtractor output properties and values to cut.
 		regrid (bool): If True, will (interpolate and) regrid model PSF to image pixel scale.
 		mask (bool): If mask, apply mask generated by spike.tools.mask_fits to remove bad pixels.
 		maskparams (dict): Any additional parameters to pass to spike.tools.mask_fits.
@@ -869,11 +887,25 @@ def psfex(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 			distances, indices = nbrs.kneighbors(X)
 			distances=np.transpose(distances)[1]
 			data = sexcat
+			print('Had {} sources, now masked to {}'.format(len(data['NUMBER']),len(data['NUMBER'][distances>maxdist])))
 			newdata = data[distances>maxdist]
 			sexcatfile[2].data=newdata
 			#hdu = fits.BinTableHDU(data=newdata)
 			hdul = fits.HDUList([sexcatfile[0],sexcatfile[1],sexcatfile[2]])
-
+			hdul.writeto(img.replace('fits', 'cat'),overwrite=True)
+            
+	if cutparams is not None:
+		with  fits.open(img.replace('fits', 'cat')) as sexcatfile:
+			data = sexcatfile[2].data
+			mask = np.ones(len(data['NUMBER']),dtype=int)
+			for param in cutparams.keys():
+				print('Removing sources with {} < {}'.format(param,cutparams[param]))
+				mask[data[param]<cutparams[param]]=0
+			print('Had {} sources, now masked to {}'.format(len(data['NUMBER']),len(data['NUMBER'][mask>0])))
+			newdata = data[mask>0]
+			sexcatfile[2].data=newdata
+			#hdu = fits.BinTableHDU(data=newdata)
+			hdul = fits.HDUList([sexcatfile[0],sexcatfile[1],sexcatfile[2]])
 			hdul.writeto(img.replace('fits', 'cat'),overwrite=True)
 
 	if verbose:

@@ -20,8 +20,8 @@ DETECT_TYPE      CCD            # CCD (linear) or PHOTO (with gamma correction)
 #DETECT_THRESH    50            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 #ANALYSIS_THRESH  50            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 DETECT_MINAREA   4              # min. # of pixels above threshold
-DETECT_THRESH    5            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-ANALYSIS_THRESH  5            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+DETECT_THRESH    10            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ANALYSIS_THRESH  10            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
  
 FILTER           Y              # apply filter for detection (Y or N)?
 FILTER_NAME      /arc/projects/quasars_1813/maddie/conda_envs/spike_github/lib/python3.11/site-packages/spike_githubDir/spike/configs/sextractor_config/default.conv   # name of the file containing the filter

@@ -14,8 +14,8 @@ NEWBASIS_NUMBER 8               # Number of new basis vectors
 PSF_SAMPLING    0.0             # Sampling step in pixel units (0.0 = auto)
 PSF_PIXELSIZE   1.0             # Effective pixel size in pixel step units
 PSF_ACCURACY    0.01            # Accuracy to expect from PSF "pixel" values
-PSF_SIZE        35,35           # Image size of the PSF model
-PSF_DGEOCORRECT N               # Use diff. geom. maps (if provided) Y/N?
+PSF_SIZE        121,121           # Image size of the PSF model
+#PSF_DGEOCORRECT N               # Use diff. geom. maps (if provided) Y/N?
 PSF_RECENTER    N               # Allow recentering of PSF-candidates Y/N ?
 MEF_TYPE        INDEPENDENT     # INDEPENDENT or COMMON
  
@@ -68,7 +68,8 @@ CHECKPLOT_DEV       PNG         # NULL, XWIN, TK, PS, PSC, XFIG, PNG,
                                 # JPEG, AQT, PDF or SVG
 CHECKPLOT_RES       0           # Check-plot resolution (0 = default)
 CHECKPLOT_ANTIALIAS Y           # Anti-aliasing using convert (Y/N) ?
-CHECKPLOT_TYPE      SELECTION_FWHM,FWHM,ELLIPTICITY,COUNTS,COUNT_FRACTION,CHI2, RESIDUALS
+CHECKPLOT_TYPE      NONE
+#CHECKPLOT_TYPE      SELECTION_FWHM,FWHM,ELLIPTICITY,COUNTS,COUNT_FRACTION,CHI2, RESIDUALS
                                 # or NONE
 CHECKPLOT_NAME      selfwhm,fwhm,ellipticity,counts,countfrac,chi2,resi
  

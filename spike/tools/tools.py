@@ -537,9 +537,13 @@ def rewrite_fits(psfarr, coords, img, imcam, pos, method = None):
 
 	if img.split('_')[-1] != '_c0m.fits':
 		ehdrdat = np.zeros_like(imgdat[('ERR', extv)].data) #shouldn't matter, but doing this explicitly anyway
-		dqhdrdat = np.zeros_like(imgdat[('DQ', extv)].data)
 		cehdr = fits.ImageHDU(data = ehdrdat, header = imgdat[('ERR', extv)].header, name = 'ERR', ver = 1)
-		cdqhdr = fits.ImageHDU(data = dqhdrdat, header = imgdat[('DQ', extv)].header, name = 'DQ', ver = 1)
+		try: ##MM hacks to get it to run on drizzled images
+			dqhdrdat = np.zeros_like(imgdat[('DQ', extv)].data)
+			cdqhdr = fits.ImageHDU(data = dqhdrdat, header = imgdat[('DQ', extv)].header, name = 'DQ', ver = 1)
+			dqarr = True
+		except:
+			dqarr = False
 
 	coordstring = str(coords.ra)
 	if coords.dec.deg >= 0:
@@ -550,10 +554,13 @@ def rewrite_fits(psfarr, coords, img, imcam, pos, method = None):
 	img_type = img.split('_')[-1].replace('.fits', '')
 	modname = img.replace('%s.fits'%img_type, coordstring+'_%s'%pos[3]+'_topsf_%s.fits'%img_type)
 
-	if img.split('_')[-1] != '_c0m.fits':
+	if (img.split('_')[-1] != '_c0m.fits') and dqarr:
 		hdlist = [cphdr, cihdr, cehdr, cdqhdr]
+        
+	elif img.split('_')[-1] != '_c0m.fits':
+		hdlist = [cphdr, cihdr]
 
-	if img.split('_')[-1] == '_c0m.fits':
+	elif img.split('_')[-1] == '_c0m.fits':
 		hdlist = [cphdr, cihdr]
 
 	try: #get WCSDVARR
@@ -600,11 +607,14 @@ def rewrite_fits(psfarr, coords, img, imcam, pos, method = None):
 			name = 'WCSDVARR', ver = 4))
 
 	if imcam in ['NIRCAM', 'MIRI', 'NIRISS']:
-		hdlist.append(fits.ImageHDU(data = imgdat['AREA', 1].data, header = imgdat['AREA', 1].header))
-		hdlist.append(fits.ImageHDU(data = imgdat['VAR_POISSON', 1].data, header = imgdat['VAR_POISSON', 1].header))
-		hdlist.append(fits.ImageHDU(data = imgdat['VAR_RNOISE', 1].data, header = imgdat['VAR_RNOISE', 1].header))
-		hdlist.append(fits.ImageHDU(data = imgdat['VAR_FLAT', 1].data, header = imgdat['VAR_FLAT', 1].header))
-		hdlist.append(fits.BinTableHDU(data = imgdat['ASDF', 1].data, header = imgdat['ASDF', 1].header))
+		try:
+			hdlist.append(fits.ImageHDU(data = imgdat['AREA', 1].data, header = imgdat['AREA', 1].header))
+			hdlist.append(fits.ImageHDU(data = imgdat['VAR_POISSON', 1].data, header = imgdat['VAR_POISSON', 1].header))
+			hdlist.append(fits.ImageHDU(data = imgdat['VAR_RNOISE', 1].data, header = imgdat['VAR_RNOISE', 1].header))
+			hdlist.append(fits.ImageHDU(data = imgdat['VAR_FLAT', 1].data, header = imgdat['VAR_FLAT', 1].header))
+			hdlist.append(fits.BinTableHDU(data = imgdat['ASDF', 1].data, header = imgdat['ASDF', 1].header))
+		except:
+			print('WARNING, missing output hdus - could be because running on a drizzled image')
 
 	hdulist = fits.HDUList(hdlist)
 
@@ -617,7 +627,7 @@ def rewrite_fits(psfarr, coords, img, imcam, pos, method = None):
 		os.system('cp %s %s'%(img.replace('c0m.fits', 'c1m.fits'), modname.replace('c0m.fits', 'c1m.fits')))
 
 
-def mask_fits(img, ext = 1, maskdq = True, dqthresh = 0, 
+def mask_fits(img, ext = 1, maskdq = False, dqthresh = 0, 
 	maskerr = False, errthresh = 20, usermask = None, fillval = 0):
 	"""
 	Generate a FITS file that fills in masked pixels with a specified value. Useful for
@@ -669,11 +679,15 @@ def mask_fits(img, ext = 1, maskdq = True, dqthresh = 0,
 
 
 	else:
+		try:
+			dq = imgdat[('DQ', ext)].data
+			dqarr = True
+		except:
+			dqarr = False
 
-		dq = imgdat[('DQ', ext)].data
 		err = imgdat[('ERR', ext)].data
 
-		if maskdq:
+		if maskdq and dqarr:
 			dat[dq > dqthresh] = fillval
 		if maskerr:
 			dat[err > errthresh] = fillval
@@ -682,10 +696,13 @@ def mask_fits(img, ext = 1, maskdq = True, dqthresh = 0,
 
 		cihdr = fits.ImageHDU(data = dat, header = hdr, name = 'SCI')
 		cehdr = fits.ImageHDU(data = err, header = imgdat[('ERR', ext)].header, name = 'ERR')
-		cdqhdr = fits.ImageHDU(data = dq, header = imgdat[('DQ', ext)].header, name = 'DQ')
+		if dqarr:
+			cdqhdr = fits.ImageHDU(data = dq, header = imgdat[('DQ', ext)].header, name = 'DQ')
 
-
-	hdlist = [cphdr, cihdr, cehdr, cdqhdr]
+	if dqarr:
+		hdlist = [cphdr, cihdr, cehdr, cdqhdr]
+	else:
+		hdlist = [cphdr, cihdr, cehdr]
 
 	hdulist = fits.HDUList(hdlist)
 	hdulist.writeto(img.replace('.fits', '_mask.fits'),overwrite=True)
