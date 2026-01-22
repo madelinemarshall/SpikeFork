@@ -567,8 +567,8 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 	psf.options['source_offset_x'] = (x-np.floor(x))*psf.pixelscale  #in arcsec #- 0.031206
 	psf.options['source_offset_y'] = (y-np.floor(y))*psf.pixelscale #in arcsec
 	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
-	psf.options['charge_diffusion_sigma'] = 0.020 #0.028
-	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
+	#psf.options['charge_diffusion_sigma'] = 0.008  #commented out to keep it at default unless requested otherwise
+	#print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
 	psf.options['parity'] = 'odd'
 	print('parity',psf.options.get('parity'))
         
@@ -713,6 +713,7 @@ def effpsf(coords, img, imcam, pos, plot = False, verbose = False, mask = True, 
 		ys = sources['ycentroid']  
 		tab['x'] = xs
 		tab['y'] = ys
+		print('Imported {} stars'.format(len(xs)))
 	else:
 		if starselect.upper() == 'DAO':
 			# take default FWHM to be 4x the detector plate scale, can overwrite with starselectargs
