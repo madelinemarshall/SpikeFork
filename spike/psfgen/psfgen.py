@@ -518,7 +518,7 @@ def stdpsf(coords, img, imcam, pos, plot = False, verbose = False,
 
 def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True,
 	fov_arcsec = 6, sample = 4, regrid = True, image_mask = None, pupil_mask = None, 
-	savefull = False, **calckwargs):
+	savefull = False, input_spectrum=False, **calckwargs):
 	"""
 	Generate JWST and Roman PSFs using WebbPSF/STPSF. Note: reference to the WebbPSF name is 
 	maintained here in lieu of STPSF to avoid confusion with the generation of empirical STDPSFs.
@@ -541,9 +541,11 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 		image_mask (str): Image mask argument for WebbPSF.
 		pupil_mask (str): Pupil mask argument for WebbPSF.
 		savefull (bool): If True, save the full multi-extension WebbPSF/STPSF output.
+		input_spectrum (bool): If True, use a z=5.8 quasar spectrum as the input source, instead of flat spectrum.
 		**calckwargs: Additional arguments for calc_psf() -- see 
 			https://stpsf.readthedocs.io/en/latest/usage.html#.
 			Should be fed to spike.psf.jwst/roman in kwargs as a dictionary called calckwargs.
+            
 
 	Returns:
 		WebbPSF model PSF
@@ -566,11 +568,13 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 	print('pix scale',psf.pixelscale)
 	psf.options['source_offset_x'] = (x-np.floor(x))*psf.pixelscale  #in arcsec #- 0.031206
 	psf.options['source_offset_y'] = (y-np.floor(y))*psf.pixelscale #in arcsec
-	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
-	#psf.options['charge_diffusion_sigma'] = 0.008  #commented out to keep it at default unless requested otherwise
 	#print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
+	#psf.options['charge_diffusion_sigma'] = 0.021  #commented out to keep CDS at default unless requested otherwise
+	print('charge_diffusion_sigma',psf.options.get('charge_diffusion_sigma'))
 	psf.options['parity'] = 'odd'
-	print('parity',psf.options.get('parity'))
+	#print('parity',psf.options.get('parity'))
+	#print('add_ipc',psf.options.get('add_ipc'))  
+    
         
 	if verbose:        
 		print('DETECTOR POSITION____________________________________________')
@@ -581,7 +585,17 @@ def jwpsf(coords, img, imcam, pos, plot = False, verbose = False, writeto = True
 
 	if verbose:
 		print('Producing PSF model')
-	psfmod = psf.calc_psf(fov_arcsec = fov_arcsec, oversample = sample, **calckwargs)
+        
+        
+	if input_spectrum:
+		from synphot import SourceSpectrum
+		sp = SourceSpectrum.from_file('/arc/home/mmarshall/quasars_project/WebbPSF/quasarSpectralTemplate_VandenBerk2001.txt')
+		sp_z6 = SourceSpectrum(sp.model, z=5.8)
+		sp_z6.meta['expr']='z5.8qso'
+		psfmod = psf.calc_psf(fov_arcsec = fov_arcsec, oversample = sample, source=sp_z6, **calckwargs)
+        
+	else:    
+		psfmod = psf.calc_psf(fov_arcsec = fov_arcsec, oversample = sample, **calckwargs)
 
 	psfmodel = psfmod['DET_DIST'].data 
 	#With geometric distortion effects and detector charge transfer effects, detector-sampled

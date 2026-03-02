@@ -553,6 +553,7 @@ def rewrite_fits(psfarr, coords, img, imcam, pos, method = None):
 
 	img_type = img.split('_')[-1].replace('.fits', '')
 	modname = img.replace('%s.fits'%img_type, coordstring+'_%s'%pos[3]+'_topsf_%s.fits'%img_type)
+	#modname = img.replace('%s.fits'%img_type, coordstring+'_%s'%pos[3]+'_topsf_z6quasarSpectrum_CDS0p021_%s.fits'%img_type)
 
 	if (img.split('_')[-1] != '_c0m.fits') and dqarr:
 		hdlist = [cphdr, cihdr, cehdr, cdqhdr]
